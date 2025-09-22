@@ -11,7 +11,6 @@ down:
 
 clean:
 	docker-compose down -v --rmi all
-	rm -rf bin/
 
 re: clean all
 
