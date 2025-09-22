@@ -1,0 +1,203 @@
+### HEALTH CHECK
+# Test basic server health
+curl -X GET http://localhost:8080/health
+
+### CREATE SUBSCRIPTION - Valid Data
+# Test successful subscription creation
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "Yandex Plus",
+    "price": 300,
+    "user_id": "70601fee-2bf1-4721-ae6f-7636e79a0cba",
+    "start_date": "07-2025"
+  }'
+
+# Test with end_date
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "Netflix Premium",
+    "price": 1200,
+    "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
+    "start_date": "01-2025",
+    "end_date": "12-2025"
+  }'
+
+### CREATE SUBSCRIPTION - Invalid Data (Error Testing)
+
+# Missing required fields
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Invalid JSON
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{"service_name": "Test"'
+
+# Invalid UUID format
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "Test Service",
+    "price": 100,
+    "user_id": "invalid-uuid",
+    "start_date": "01-2025"
+  }'
+
+# Negative price
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "Test Service",
+    "price": -100,
+    "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
+    "start_date": "01-2025"
+  }'
+
+# Invalid date format
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "Test Service",
+    "price": 100,
+    "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
+    "start_date": "invalid-date"
+  }'
+
+# Service name too long
+curl -X POST http://localhost:8080/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "This is a very very very veryvery veryvery veryvery veryvery veryvery veryvery veryvery very very veryvery veryvery veryvery veryvery very long service name that exceeds the 255 character limit and should cause a validation error because it is way too loveryvery veryvery veryvery veryvery veryvery veryvery very very veryvery veryvery veryvery veryvery very long service name that exceeds the 255 character limit and should cause a validation error because it is way too long for the database field",
+    "price": 100,
+    "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
+    "start_date": "01-2025"
+  }'
+
+### LIST SUBSCRIPTIONS
+
+# Get all subscriptions
+curl -X GET http://localhost:8080/subscriptions
+
+# Filter by user_id
+curl -X GET "http://localhost:8080/subscriptions?user_id=60601fee-2bf1-4721-ae6f-7636e79a0cba"
+
+# Filter by service_name
+curl -X GET "http://localhost:8080/subscriptions?service_name=Netflix"
+
+# Combined filters
+curl -X GET "http://localhost:8080/subscriptions?user_id=60601fee-2bf1-4721-ae6f-7636e79a0cba&service_name=Yandex"
+
+# With pagination
+curl -X GET "http://localhost:8080/subscriptions?limit=10&offset=0"
+
+# Invalid user_id filter
+curl -X GET "http://localhost:8080/subscriptions?user_id=invalid-uuid"
+
+### GET SUBSCRIPTION BY ID
+
+# Get specific subscription (replace {id} with actual UUID from create response)
+curl -X GET http://localhost:8080/subscriptions/9e525b05-16c9-4cdf-ace8-d3505334eada
+
+# Invalid UUID format
+curl -X GET http://localhost:8080/subscriptions/invalid-uuid
+
+# Non-existent ID
+curl -X GET http://localhost:8080/subscriptions/00000000-0000-0000-0000-000000000000
+
+### UPDATE SUBSCRIPTION
+
+# Update subscription (replace {id} with actual UUID)
+curl -X PUT http://localhost:8080/subscriptions/d6a47067-402d-462a-baea-c4b422bfbe79 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "Yandex Plus Updated",
+    "price": 450
+  }'
+
+# Update with end_date null (to clear end_date)
+curl -X PUT http://localhost:8080/subscriptions/9e525b05-16c9-4cdf-ace8-d3505334eada \
+  -H "Content-Type: application/json" \
+  -d '{
+    "end_date": "null"
+  }'
+
+# Update with invalid data
+curl -X PUT http://localhost:8080/subscriptions/60601fee-2bf1-4721-ae6f-7636e79a0cba \
+  -H "Content-Type: application/json" \
+  -d '{
+    "price": -100
+  }'
+
+# Update non-existent subscription
+curl -X PUT http://localhost:8080/subscriptions/00000000-0000-0000-0000-000000000000 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_name": "Updated Service"
+  }'
+
+### DELETE SUBSCRIPTION
+
+# Delete subscription (replace {id} with actual UUID)
+curl -X DELETE http://localhost:8080/subscriptions/2e8d56d5-fc61-47f8-af12-fab62c5d1e4d
+
+# Delete non-existent subscription
+curl -X DELETE http://localhost:8080/subscriptions/00000000-0000-0000-0000-000000000000
+
+# Delete with invalid UUID
+curl -X DELETE http://localhost:8080/subscriptions/invalid-uuid
+
+### AGGREGATE SUBSCRIPTIONS
+
+# Aggregate all subscriptions for a period
+curl -X POST http://localhost:8080/subscriptions/aggregate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "01-2025",
+    "end_date": "12-2025"
+  }'
+
+# Aggregate for specific user
+curl -X POST http://localhost:8080/subscriptions/aggregate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "01-2025",
+    "end_date": "12-2025",
+    "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+  }'
+
+# Aggregate for specific service
+curl -X POST http://localhost:8080/subscriptions/aggregate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "01-2025",
+    "end_date": "12-2025",
+    "service_name": "Yandex Plus"
+  }'
+
+# Aggregate with combined filters
+curl -X POST http://localhost:8080/subscriptions/aggregate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "01-2025",
+    "end_date": "12-2025",
+    "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
+    "service_name": "Yandex Plus"
+  }'
+
+# Aggregate with invalid date format
+curl -X POST http://localhost:8080/subscriptions/aggregate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "invalid-date",
+    "end_date": "12-2025"
+  }'
+
+# Aggregate with missing required fields
+curl -X POST http://localhost:8080/subscriptions/aggregate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "01-2025"
+  }'
